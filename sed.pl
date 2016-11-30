@@ -66,7 +66,7 @@ if ($startFlag eq 's')		#Replace
 	elsif ($lastFlag =~ m/i+/)
 		{@matchs = $input =~ s/($firstStr)/++$count==$repeat ? $secondStr:$1/eig;}
 	elsif ($lastFlag =~ m/g+/)
-		{@matchs = $input =~ s/\Q$firstStr/$secondStr/g;}
+		{@matchs = $input =~ s/$firstStr/$secondStr/g;}
 	else
 		{@matchs = $input =~ s/($firstStr)/++$count==$repeat ? $secondStr:$1/eg;}
 	$output = $input;

@@ -1,6 +1,7 @@
 use strict;
 use warnings;
 use bignum;
+use Math::BigInt;
 use Crypt::Primes qw( maurer );
 use Crypt::Random qw( makerandom_itv);
 
@@ -11,17 +12,18 @@ my $phiN;
 my $p;
 my $q; #temp of very large prime nums
 
-$p = maurer( Size=>32, Verbosity=>1);
-$q = maurer( Size=>32, Verbosity=>1 );
+$p = maurer( Size=>128, Verbosity=>0);
+$q = maurer( Size=>128, Verbosity=>0);
 $phiN = ($p-1)*($q-1);
 $n = $p * $q;
+
 
 #calculate the public key index
 for ( my $i=  2 ;$i<  $phiN; ++$i) 
 {
 	if ( euclid( $i, $phiN ) == 1 )
 	{	
-		if (int(rand(1000)) % 33  == 0 )	#Put a random factor in
+		if (int(rand(10000)) % 1234  == 0 )	#Put a random factor in
 		{
 			$e = $i;
 			last;
@@ -29,25 +31,14 @@ for ( my $i=  2 ;$i<  $phiN; ++$i)
 	}
 }
 
-print "\n" . $e . "\n";
+my $x = $e ** 1;
 
-#calculate the private key
-for ( my $i = 2 ; $i < $phiN ; $i++ )
-{
-	if (($e * $i) % $phiN == 1 )
-	{
-		$d = $i;
-		print $i . "\n";
-		last;
-		
-	}
+my $mod = $phiN;
+  
+$x->bmodinv($mod);    # modular multiplicative inverse
+$d = $x;
 
-
-	print "Running ... " . $i . "\n" if ($i %1000 ==0);
-}
-
-
-print $d . "\n";
+print "PU{$e,$n}\tPR{$d,$n}";
 
 #function that will find the GCD of 2 numbers
 sub euclid 
