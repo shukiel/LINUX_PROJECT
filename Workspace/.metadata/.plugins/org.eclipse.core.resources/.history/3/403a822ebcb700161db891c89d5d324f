@@ -230,10 +230,15 @@ public final class UnixProjectUI extends Application {
 	}
 
 	private Properties loadProperties() {
+		try {
+			new FileInputStream("/Users/enoshcohen/Dropbox/School/Afeka/3rd year/UNIX/Final Project/UnixProjectUI/resources/properties");
+		} catch (FileNotFoundException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		String propFileName = "properties";
 		try {
-			InputStream in = new FileInputStream("/Users/enoshcohen/Dropbox/School/Afeka/3rd year/UNIX/Final Project/UnixProjectUI/resources/properties");
-			//this.getClass().getClassLoader().getResourceAsStream(propFileName); 
+			InputStream in = this.getClass().getClassLoader().getResourceAsStream(propFileName); 
 			//??Thread.currentThread().getContextClassLoader().getResourceAsStream(propFileName);
 			if (in == null) {
 				String errorMessage = String.format("Properties file %s could not be found", propFileName);
