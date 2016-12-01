@@ -1,3 +1,4 @@
+#!/usr/bin/perl
 #my implemantation of GNU cmp with the verbose and print-byte option on
 
 use strict;
@@ -15,20 +16,23 @@ my $b2;
 my $count = 0;
 my $d1;
 my $d2;
+my $changed = 0;
 
 while (1)
 {
-	read ($f1, $b1, 1) or die "EOF on $ARGV[0]" ;
+	read ($f1, $b1, 1) or die $changed == 1 ? "EOF on $ARGV[0]" : "Files are identical" ;
 	read ($f2, $b2, 1) or die "EOF on $ARGV[1]" ;
 
 	#print $b1 eq $b2 ? color("yellow") : color("red") ,++$count."\t".ord($b1)." - \Q$b1\E\t".ord($b2)." - \Q$b2\E\n", color("reset");
 	$d1 = ord($b1);
 	$d2 = ord($b2);
-	
+	$changed = 1 if ($d1 != $d2);
 	$b1 =~ s/(\s)//;
 	$b2 =~ s/(\s)//;
 
 	my $color = $d1 == $d2 ? "reset" : "red";
-	print colored(sprintf("%-5s : %-3s %-2s \t %-3s %-2s\n",++$count, $d1, $b1, $d2, $b2 ), $color);
+	print colored(sprintf("%-5s : %-3s %-2s \t %-3s %-2s\n",++$count, $d1, $b1, $d2, $b2 ), $color) if ($d1 != $d2);
 }
+
+print "IDENTICAL" if ($changed == 0);
 

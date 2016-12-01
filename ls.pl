@@ -1,5 +1,8 @@
+#!/usr/bin/perl
+
 use Cwd;
 use strict;
+use Term::ANSIColor; 
 
 #print "args : $#ARGV\n";
 
@@ -20,7 +23,7 @@ if($#ARGV == 0)
 	#print "one arg : \n";
 	if(@ARGV[0] =~ m/-[la]+/)
 	{
-		print "the arg is option\n";	
+		#print "the arg is option\n";	
 		$argOption = @ARGV[0];
 		$d = undef;
 		
@@ -48,18 +51,19 @@ opendir(D, "$d") || die "Can't open directory $d: $!\n";
 my @list = readdir(D);
 closedir(D);
 foreach my $f (@list) {
-	if ( defined $argOption) 			#if there is options in the command
+	my $color = -d $f ? "blue" : "reset";
+	if ( defined $argOption ) 			#if there is options in the command
 	{
 		{
 		    if ( $f !~ m/^\..*/ || $argOption =~ m/a/ )
 			{
 				if( $argOption =~ m/l/ )
 				{		
-					print "$f\n";
+					print colored("$f\n", $color);
 				}
 				else
 				{
-					print "$f\t";
+					print colored("$f\t", $color);
 				}
       			}   
     		}
@@ -68,7 +72,7 @@ foreach my $f (@list) {
 	{
 	    if ( $f !~ m/^\..*/)
 		{
-		    print "$f\t";
+		    print colored( "$f\t", $color);
       		}   
     	}
 }
