@@ -69,6 +69,7 @@ public final class UnixProjectUI extends Application {
 		buttonGo.setDisable(true);
 		rbEncrypt.setUserData(true);
 		rbEncrypt.setSelected(true);
+		
 		rbEncrypt.setToggleGroup(radioButttonsGroup);
 		rbDecrypt.setUserData(false);
 		rbDecrypt.setToggleGroup(radioButttonsGroup);
@@ -84,12 +85,12 @@ public final class UnixProjectUI extends Application {
 		final HBox rsahbox = new HBox(12);
 		rsahbox.getChildren().addAll(enterRsaKeys, tfRsaKeys, enterCryptedKey, tfCryptedDesKey);
 
-		final VBox rootGroup = new VBox(12);
-		Scene scene = new Scene(new ScrollPane(rootGroup), paneWidth, paneHeight);
+		final VBox mainPane = new VBox(12);
+		Scene scene = new Scene(new ScrollPane(mainPane), paneWidth, paneHeight);
 		taConsole.setPrefWidth(scene.getWidth() - scene.getWidth() * 0.05);
 		taConsole.setPrefHeight(scene.getHeight() - scene.getHeight() * 0.15);
-		rootGroup.getChildren().addAll(hbox, rsahbox, rbhbox, new ScrollPane(taConsole));
-		rootGroup.setPadding(new Insets(12, 12, 12, 12));
+		mainPane.getChildren().addAll(hbox, rsahbox, rbhbox, new ScrollPane(taConsole));
+		mainPane.setPadding(new Insets(12, 12, 12, 12));
 
 		stage.setScene(scene);
 		stage.show();
@@ -100,16 +101,10 @@ public final class UnixProjectUI extends Application {
 			boolean isEncrypted = (boolean) radioButttonsGroup.getSelectedToggle().getUserData();
 			if (isEncrypted) {
 				if (verifyDesKeyInput()) {
-					String key = tfDesKey.getText();
-					tfDesKey.clear();
-					runDesScript(inputFile, key, isEncrypted);
-					runRSAScript(key, isEncrypted);
-					openFile(inputFile);
+					runEncrypt();
 				}
 			} else {
-				String key = runRSAScript(tfCryptedDesKey.getText(), isEncrypted);
-				runDesScript(inputFile, key, isEncrypted);
-				openFile(inputFile);
+				runDecrypt();
 			}
 
 		} catch (Exception e) {
@@ -117,11 +112,26 @@ public final class UnixProjectUI extends Application {
 		}
 	}
 
+	private void runDecrypt() throws IOException, InterruptedException {
+		boolean isEncrypted = false;
+		String key = runRSAScript(tfCryptedDesKey.getText(), isEncrypted);
+		runDesScript(inputFile, key, isEncrypted);
+		openFile(inputFile);
+	}
+
+	private void runEncrypt() throws IOException, InterruptedException {
+		boolean isEncrypted = true;
+		String key = tfDesKey.getText();
+		tfDesKey.clear();
+		runDesScript(inputFile, key, isEncrypted);
+		runRSAScript(key, isEncrypted);
+		openFile(inputFile);
+	}
+
 	private boolean verifyDesKeyInput() {
 		if (tfDesKey.getText().length() != 8) {
 			printToTextAreaConsole("Wrong key size!!");
 			return false;
-
 		} else {
 			printToTextAreaConsole("Valid Key Inserted");
 			return true;
@@ -135,6 +145,8 @@ public final class UnixProjectUI extends Application {
 			buttonGo.setDisable(false);
 			taConsole.clear();
 			stage.setTitle("Enosh & Zuki Project - " + inputFile.getAbsolutePath());
+		}else{
+			buttonGo.setDisable(true);
 		}
 	}
 
@@ -177,6 +189,8 @@ public final class UnixProjectUI extends Application {
 		}
 		Process rsa = new ProcessBuilder(perlRun, rsaPerlScript, Integer.toString(encrypt), key, text)
 				.redirectError(Redirect.INHERIT).start();
+		String msg = isEncrypt ? "Encrypted" : "Decrypted";
+		printToTextAreaConsole(String.format("DES Key %s:", msg));
 		String out = getProcessPrintAndAddToConsole(rsa);
 
 		if (isAutoFillKeys) {
