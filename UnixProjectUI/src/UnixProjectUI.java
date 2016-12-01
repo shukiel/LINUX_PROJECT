@@ -2,10 +2,12 @@ import java.awt.Desktop;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.ProcessBuilder.Redirect;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -28,158 +30,184 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 public final class UnixProjectUI extends Application {
+	private final boolean isAutoFillKeys = true;
 	private final double SCREEN_HEIGHT = Screen.getPrimary().getVisualBounds().getHeight();
 	private final double SCREEN_WIDTH = Screen.getPrimary().getVisualBounds().getWidth();
 	private final String TEMP_FILE_NAME = File.separator + "temp";
 	private Desktop desktop = Desktop.getDesktop();
 	private File inputFile;
-	private static TextArea ta = new TextArea();
-	private ToggleGroup group = new ToggleGroup();
-	private TextField keysTf = new TextField();
-	private TextField cryptedKeyTf = new TextField();
+	private Properties properties;
+	private TextArea taConsole = new TextArea();
+	private PasswordField tfDesKey = new PasswordField();
+	private TextField tfRsaKeys = new TextField();
+	private TextField tfCryptedDesKey = new TextField();
+	private FileChooser fileChooser = new FileChooser();
+	private Button buttonOpenFile = new Button("Select a File...");
+	private Button buttonGo = new Button("Go!");
+	private Text textEnterKey = new Text("Enter 8 characters long key:");
+	private Text enterRsaKeys = new Text("Enter RSA Keys:");
+	private Text enterCryptedKey = new Text("Enter crypted Key:");
+	private ToggleGroup radioButttonsGroup = new ToggleGroup();
+	private RadioButton rbEncrypt = new RadioButton("Encrypt");
+	private RadioButton rbDecrypt = new RadioButton("Decrypt");
 
 	@Override
 	public void start(final Stage stage) {
+		initGui(stage);
+		printToTextAreaConsole("First, select a file");
+		properties = loadProperties();
+	}
+
+	private void initGui(final Stage stage) {
 		stage.setTitle("Enosh & Zuki Project");
 		double paneWidth = SCREEN_WIDTH / 2;
 		double paneHeight = SCREEN_HEIGHT / 2;
-		final FileChooser fileChooser = new FileChooser();
-		final Button openButton = new Button("Select a File...");
-		final Button encryptButton = new Button("Go!");
-		final Text enterKey = new Text("Enter 8 characters long key:");
-		final PasswordField  keyField = new PasswordField();
-		final Text enterRsaKeys = new Text("Enter RSA Keys:");
+		enterRsaKeys.setVisible(false);
+		enterCryptedKey.setVisible(false);
+		tfRsaKeys.setVisible(false);
+		tfCryptedDesKey.setVisible(false);
+		buttonGo.setDisable(true);
+		rbEncrypt.setUserData(true);
+		rbEncrypt.setSelected(true);
 		
-		final Text enterCryptedKey = new Text("Enter crypted Key:");
-		
-		enterKey.setVisible(false);
-		keyField.setVisible(false);
+		rbEncrypt.setToggleGroup(radioButttonsGroup);
+		rbDecrypt.setUserData(false);
+		rbDecrypt.setToggleGroup(radioButttonsGroup);
+		rbDecrypt.setOnAction(e -> setGuiForDecrypt());
+		rbEncrypt.setOnAction(e -> setGuiForEncrypt());
+		buttonOpenFile.setOnAction(e -> openFileAction(stage));
+		buttonGo.setOnAction(e -> goButtonAction());
 
-		RadioButton rb1 = new RadioButton("Encrypt");
-		rb1.setUserData(true);
-		rb1.setToggleGroup(group);
-
-		RadioButton rb2 = new RadioButton("Decrypt");
-		rb2.setUserData(false);
-		rb2.setSelected(true);
-		rb2.setToggleGroup(group);
-
-		rb2.setOnAction(e->{
-			enterRsaKeys.setVisible(true);
-			keysTf.setVisible(true);
-			enterCryptedKey.setVisible(true);
-			cryptedKeyTf.setVisible(true);
-			enterKey.setVisible(false);
-			keyField.setVisible(false);
-		});
-		rb1.setOnAction(e->{
-			enterRsaKeys.setVisible(false);
-			keysTf.setVisible(false);
-			enterCryptedKey.setVisible(false);
-			cryptedKeyTf.setVisible(false);
-			enterKey.setVisible(true);
-			keyField.setVisible(true);
-		});
-		openButton.setOnAction(e -> {
-			inputFile = fileChooser.showOpenDialog(stage);
-			if (inputFile != null) {
-				printToTextAreaConsole(inputFile.getAbsolutePath() + " is loaded!");
-				// encryptButton.setDisable(false);
-			}
-		});
-		keyField.setOnAction(e -> {
-			if (keyField.getText().length() != 8) {
-				printToTextAreaConsole("Wrong key size!!");
-				
-			} else {
-				printToTextAreaConsole("Valid Key Inseted");
-				
-			}
-		});
-		encryptButton.setOnAction(e -> {
-			try {
-				if((boolean)group.getSelectedToggle().getUserData()){
-					String key = keyField.getText();
-					runDesScript(inputFile, key, (boolean) group.getSelectedToggle().getUserData());
-					runRSAScript(key, true);
-					openFile(inputFile);
-				}else{
-					String key = runRSAScript(cryptedKeyTf.getText(), false);
-					runDesScript(inputFile, key, (boolean)group.getSelectedToggle().getUserData());
-					openFile(inputFile);
-				}
-			} catch (Exception e1) {
-				e1.printStackTrace();
-			}
-
-		});
-		// String perlScript = "C:\\perl_test\\test111.pl";
-
-		// runScript(perlScript);
 		final HBox hbox = new HBox(12);
-		hbox.getChildren().addAll(openButton, encryptButton, enterKey, keyField);
+		hbox.getChildren().addAll(buttonOpenFile, buttonGo, textEnterKey, tfDesKey);
 		final HBox rbhbox = new HBox(12);
-		rbhbox.getChildren().addAll(rb1, rb2);
+		rbhbox.getChildren().addAll(rbEncrypt, rbDecrypt);
 		final HBox rsahbox = new HBox(12);
-		rsahbox.getChildren().addAll(enterRsaKeys, keysTf,enterCryptedKey,cryptedKeyTf);
-		
-		final VBox rootGroup = new VBox(12);
-		Scene scene = new Scene(new ScrollPane(rootGroup), paneWidth, paneHeight);
-		ta.setPrefWidth(scene.getWidth() - scene.getWidth() * 0.05);
-		ta.setPrefHeight(scene.getHeight() - scene.getHeight() * 0.15);
-		rootGroup.getChildren().addAll(hbox,rsahbox, rbhbox, new ScrollPane(ta));
-		rootGroup.setPadding(new Insets(12, 12, 12, 12));
+		rsahbox.getChildren().addAll(enterRsaKeys, tfRsaKeys, enterCryptedKey, tfCryptedDesKey);
+
+		final VBox mainPane = new VBox(12);
+		Scene scene = new Scene(new ScrollPane(mainPane), paneWidth, paneHeight);
+		taConsole.setPrefWidth(scene.getWidth() - scene.getWidth() * 0.05);
+		taConsole.setPrefHeight(scene.getHeight() - scene.getHeight() * 0.15);
+		mainPane.getChildren().addAll(hbox, rsahbox, rbhbox, new ScrollPane(taConsole));
+		mainPane.setPadding(new Insets(12, 12, 12, 12));
 
 		stage.setScene(scene);
 		stage.show();
 	}
 
-	private static void printToTextAreaConsole(String txt) {
-		Platform.runLater(() -> ta.appendText(txt + "\n"));
+	private void goButtonAction() {
+		try {
+			boolean isEncrypted = (boolean) radioButttonsGroup.getSelectedToggle().getUserData();
+			if (isEncrypted) {
+				if (verifyDesKeyInput()) {
+					runEncrypt();
+				}
+			} else {
+				runDecrypt();
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
+	private void runDecrypt() throws IOException, InterruptedException {
+		boolean isEncrypted = false;
+		String key = runRSAScript(tfCryptedDesKey.getText(), isEncrypted);
+		runDesScript(inputFile, key, isEncrypted);
+		openFile(inputFile);
+	}
+
+	private void runEncrypt() throws IOException, InterruptedException {
+		boolean isEncrypted = true;
+		String key = tfDesKey.getText();
+		tfDesKey.clear();
+		runDesScript(inputFile, key, isEncrypted);
+		runRSAScript(key, isEncrypted);
+		openFile(inputFile);
+	}
+
+	private boolean verifyDesKeyInput() {
+		if (tfDesKey.getText().length() != 8) {
+			printToTextAreaConsole("Wrong key size!!");
+			return false;
+		} else {
+			printToTextAreaConsole("Valid Key Inserted");
+			return true;
+		}
+	}
+
+	private void openFileAction(Stage stage) {
+		inputFile = fileChooser.showOpenDialog(stage);
+		if (inputFile != null) {
+			printToTextAreaConsole(inputFile.getAbsolutePath() + " is loaded!");
+			buttonGo.setDisable(false);
+			taConsole.clear();
+			stage.setTitle("Enosh & Zuki Project - " + inputFile.getAbsolutePath());
+		}else{
+			buttonGo.setDisable(true);
+		}
+	}
+
+	private void printToTextAreaConsole(String txt) {
+		Platform.runLater(() -> taConsole.appendText(txt + "\n"));
+	}
 
 	private void runDesScript(File inputFile, String key, boolean isEncrypt) throws IOException, InterruptedException {
 		String filePath = inputFile.getAbsolutePath();
 		String tempFilePath = inputFile.getParent() + TEMP_FILE_NAME;
 		printToTextAreaConsole("Starting DES");
-		String perlScript = "/Users/enoshcohen/Dropbox/School/Afeka/3rd year/UNIX/Final Project/DES.pl";
+		String perlScript = properties.getProperty("perlscript.des");
 		int encrypt = isEncrypt ? 1 : 0;
 		Process p = new ProcessBuilder("perl", perlScript, filePath, tempFilePath, key, Integer.toString(encrypt))
 				.start();
-		addPrintToConsole(p);
+		getProcessPrintAndAddToConsole(p);
 		p.waitFor();
 		File encryptedFile = new File(tempFilePath);
 		Files.copy(encryptedFile.toPath(), inputFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		printToTextAreaConsole("Done...");
 	}
-	
-	private String runRSAScript( String text ,boolean isEncrypt) throws IOException, InterruptedException {
+
+	private String runRSAScript(String text, boolean isEncrypt) throws IOException, InterruptedException {
 		printToTextAreaConsole("Starting RSA");
-		String perlScript = "/Users/enoshcohen/Dropbox/School/Afeka/3rd year/UNIX/Final Project/RSA.pl";
-		String genKeyPath = "/Users/enoshcohen/Dropbox/School/Afeka/3rd year/UNIX/Final Project/genKey.pl";
+		String rsaPerlScript = properties.getProperty("perlscript.rsa");
+		String genKeyPerlScript = properties.getProperty("perlscript.genkey");
+		String perlRun = properties.getProperty("perl.run");
 		int encrypt = isEncrypt ? 1 : 0;
 		String key;
-		if(isEncrypt)
-		{
-			Process genKey = new ProcessBuilder("/usr/local/bin/perl5.24.0", genKeyPath).redirectError(Redirect.INHERIT).start();
-			key = addPrintToConsole(genKey);
+		if (isEncrypt) {
+			Process genKey = new ProcessBuilder(perlRun, genKeyPerlScript).redirectError(Redirect.INHERIT).start();
+			printToTextAreaConsole("RSA Keys:");
+			key = getProcessPrintAndAddToConsole(genKey);
+			if (isAutoFillKeys) {
+				tfRsaKeys.setText(key);
+			}
 			genKey.waitFor();
-		}else{
-			key = keysTf.getText();
+		} else {
+			key = tfRsaKeys.getText();
 		}
-		Process rsa = new ProcessBuilder(
-				"/usr/local/bin/perl5.24.0", perlScript, Integer.toString(encrypt), key , text)
-		.redirectError(Redirect.INHERIT).start();
-		String out = addPrintToConsole(rsa);
+		Process rsa = new ProcessBuilder(perlRun, rsaPerlScript, Integer.toString(encrypt), key, text)
+				.redirectError(Redirect.INHERIT).start();
+		String msg = isEncrypt ? "Encrypted" : "Decrypted";
+		printToTextAreaConsole(String.format("DES Key %s:", msg));
+		String out = getProcessPrintAndAddToConsole(rsa);
+
+		if (isAutoFillKeys) {
+			if (isEncrypt) {
+				tfCryptedDesKey.setText(out);
+			} else {
+				tfDesKey.setText(out);
+			}
+		}
+
 		rsa.waitFor();
-		
 		printToTextAreaConsole("Done...");
 		return out;
 	}
 
-	private static String addPrintToConsole(Process rsa) throws IOException {
-		BufferedReader reader = new BufferedReader(new InputStreamReader(rsa.getInputStream()));
+	private String getProcessPrintAndAddToConsole(Process process) throws IOException {
+		BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 		StringBuilder builder = new StringBuilder();
 		String line = null;
 		while ((line = reader.readLine()) != null) {
@@ -197,6 +225,43 @@ public final class UnixProjectUI extends Application {
 		} catch (IOException ex) {
 			Logger.getLogger(UnixProjectUI.class.getName()).log(Level.SEVERE, null, ex);
 		}
+	}
+
+	private Properties loadProperties() {
+		String propFileName = "properties";
+		try {
+			InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(propFileName);
+			if (in == null) {
+				String errorMessage = String.format("Properties file %s could not be found", propFileName);
+				printToTextAreaConsole(errorMessage);
+				throw new RuntimeException(errorMessage);
+			}
+			Properties properties = new Properties();
+			properties.load(in);
+			return properties;
+		} catch (IOException e) {
+			String errorMessage = String.format("IOException in reading propoerty file: %s", propFileName);
+			printToTextAreaConsole(errorMessage);
+			throw new RuntimeException(errorMessage, e);
+		}
+	}
+
+	private void setGuiForEncrypt() {
+		enterRsaKeys.setVisible(false);
+		tfRsaKeys.setVisible(false);
+		enterCryptedKey.setVisible(false);
+		tfCryptedDesKey.setVisible(false);
+		textEnterKey.setVisible(true);
+		tfDesKey.setVisible(true);
+	}
+
+	private void setGuiForDecrypt() {
+		enterRsaKeys.setVisible(true);
+		tfRsaKeys.setVisible(true);
+		enterCryptedKey.setVisible(true);
+		tfCryptedDesKey.setVisible(true);
+		textEnterKey.setVisible(false);
+		tfDesKey.setVisible(false);
 	}
 
 	public static void main(String[] args) throws IOException, InterruptedException {

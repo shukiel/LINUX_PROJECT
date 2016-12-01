@@ -1,0 +1,4 @@
+perlscript.des=/Users/enoshcohen/Dropbox/School/Afeka/3rd year/UNIX/Final Project/DES.pl
+perlscript.rsa=/Users/enoshcohen/Dropbox/School/Afeka/3rd year/UNIX/Final Project/RSA.pl
+perlscript.genkey=/Users/enoshcohen/Dropbox/School/Afeka/3rd year/UNIX/Final Project/genKey.pl
+perl.run=/usr/local/bin/perl5.24.0
