@@ -31,7 +31,7 @@ public final class UnixProjectUI extends Application {
 	private final String TEMP_FILE_NAME = File.separator + "temp";
 	private Desktop desktop = Desktop.getDesktop();
 	private File inputFile;
-	private TextArea ta = new TextArea();
+	private static TextArea ta = new TextArea();
 	private ToggleGroup group = new ToggleGroup();
 
 	@Override
@@ -110,22 +110,14 @@ public final class UnixProjectUI extends Application {
 		stage.show();
 	}
 
-	private void printToTextAreaConsole(String txt) {
+	private static void printToTextAreaConsole(String txt) {
 		Platform.runLater(() -> ta.appendText(txt + "\n"));
 	}
 
 	private void runScript(String perlScript) throws IOException, InterruptedException {
 		Process p = new ProcessBuilder("perl", perlScript).start();
 
-		BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
-		StringBuilder builder = new StringBuilder();
-		String line = null;
-		while ((line = reader.readLine()) != null) {
-			builder.append(line);
-			builder.append(System.getProperty("line.separator"));
-		}
-		String result = builder.toString();
-		printToTextAreaConsole(result);
+		addPrintToConsole(p);
 		p.waitFor();
 	}
 
@@ -133,11 +125,35 @@ public final class UnixProjectUI extends Application {
 		String filePath = inputFile.getAbsolutePath();
 		String tempFilePath = inputFile.getParent() + TEMP_FILE_NAME;
 		printToTextAreaConsole("Starting DES");
-		String perlScript = "C:\\perl_test\\DES.pl";
+		String perlScript = "/Users/enoshcohen/Dropbox/School/Afeka/3rd year/UNIX/Final Project/DES.pl";
 		int encrypt = isEncrypt ? 1 : 0;
 		Process p = new ProcessBuilder("perl", perlScript, filePath, tempFilePath, key, Integer.toString(encrypt))
 				.start();
-		BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+		addPrintToConsole(p);
+		p.waitFor();
+		File encryptedFile = new File(tempFilePath);
+		Files.copy(encryptedFile.toPath(), inputFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+		printToTextAreaConsole("Done...");
+	}
+	
+	private static void runRSAScript( String text  ,boolean isEncrypt) throws IOException, InterruptedException {
+		printToTextAreaConsole("Starting RSA");
+		String perlScript = "/Users/enoshcohen/Dropbox/School/Afeka/3rd year/UNIX/Final Project/RSA.pl";
+		String genKeyPath = "/Users/enoshcohen/Dropbox/School/Afeka/3rd year/UNIX/Final Project/genKey.pl";
+		int encrypt = isEncrypt ? 1 : 0;
+		
+		Process genKey = new ProcessBuilder("perl","" ,genKeyPath).start();
+		addPrintToConsole(genKey);
+		genKey.waitFor();
+		//Process rsa = new ProcessBuilder("perl", perlScript, Integer.toString(encrypt), "`cat key`" , text, ">", "CryptedRSA")
+		//		.start();
+		//addPrintToConsole(rsa);
+		//rsa.waitFor();
+		printToTextAreaConsole("Done...");
+	}
+
+	private static void addPrintToConsole(Process rsa) throws IOException {
+		BufferedReader reader = new BufferedReader(new InputStreamReader(rsa.getInputStream()));
 		StringBuilder builder = new StringBuilder();
 		String line = null;
 		while ((line = reader.readLine()) != null) {
@@ -146,10 +162,6 @@ public final class UnixProjectUI extends Application {
 		}
 		String result = builder.toString();
 		printToTextAreaConsole(result);
-		p.waitFor();
-		File encryptedFile = new File(tempFilePath);
-		Files.copy(encryptedFile.toPath(), inputFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-		printToTextAreaConsole("Done...");
 	}
 
 	private void openFile(File file) {
@@ -160,8 +172,8 @@ public final class UnixProjectUI extends Application {
 		}
 	}
 
-	public static void main(String[] args) throws IOException {
-
+	public static void main(String[] args) throws IOException, InterruptedException {
+		runRSAScript("12345678", true);
 		Application.launch(args);
 	}
 }

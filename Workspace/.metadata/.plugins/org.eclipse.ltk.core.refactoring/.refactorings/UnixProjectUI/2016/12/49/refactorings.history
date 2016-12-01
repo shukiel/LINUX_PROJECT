@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Extract method &apos;private static void addPrintToConsole(Process rsa) throws IOException &apos; from &apos;UnixProjectUI.runRSAScript()&apos; to &apos;UnixProjectUI&apos;&#x0A;- Original project: &apos;UnixProjectUI&apos;&#x0A;- Method name: &apos;addPrintToConsole&apos;&#x0A;- Destination type: &apos;UnixProjectUI&apos;&#x0A;- Declared visibility: &apos;private&apos;&#x0A;- Replace occurrences of statements with method" comments="false" description="Extract method &apos;addPrintToConsole&apos;" destination="0" exceptions="false" flags="786434" id="org.eclipse.jdt.ui.extract.method" input="/src&lt;{UnixProjectUI.java" name="addPrintToConsole" replace="true" selection="6065 365" stamp="1480552311140" version="1.0" visibility="2"/>
+</session>

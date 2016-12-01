@@ -5,6 +5,8 @@ use Math::BigInt;
 use Crypt::Primes qw( maurer );
 use Crypt::Random qw( makerandom_itv);
 
+
+print "Hello From GenKey!\n";
 my $e;	#public	 key index
 my $d;	#private key index
 my $n;  #modulo size
