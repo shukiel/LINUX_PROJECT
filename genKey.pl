@@ -1,3 +1,4 @@
+#!/usr/local/bin/perl5.24.0
 use strict;
 use warnings;
 use bignum;
@@ -6,7 +7,6 @@ use Crypt::Primes qw( maurer );
 use Crypt::Random qw( makerandom_itv);
 
 
-print "Hello From GenKey!\n";
 my $e;	#public	 key index
 my $d;	#private key index
 my $n;  #modulo size
@@ -14,8 +14,8 @@ my $phiN;
 my $p;
 my $q; #temp of very large prime nums
 
-$p = maurer( Size=>128, Verbosity=>0);
-$q = maurer( Size=>128, Verbosity=>0);
+$p = maurer( Size=>1024, Verbosity=>0);
+$q = maurer( Size=>1024, Verbosity=>0);
 $phiN = ($p-1)*($q-1);
 $n = $p * $q;
 

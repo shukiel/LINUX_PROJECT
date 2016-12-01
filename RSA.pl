@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use bigint;
-use Math::BigInt lib => 'GMP';
+use Math::BigInt try => 'GMP';
 
 
 my $isEncrypt;
